@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Operativo DEHIKE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dehike-primary: #C8722A;
+            --dehike-dark: #7B2D2D;
+            --dehike-cream: #F1EFE8;
+            --dehike-beige: #A89888;
+            --dehike-black: #2C2C2C;
+            --success: #27AE60;
+            --warning: #F39C12;
+            --danger: #E74C3C;
+            --info: #3498DB;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--dehike-cream) 0%, #f5f3f0 100%);
+            color: var(--dehike-black);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--dehike-dark);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid var(--dehike-primary);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dehike-beige);
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dehike-primary);
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* HIKES IMPORTANTES */
+        .hikes-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--dehike-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--dehike-primary);
+        }
+
+        .hike-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #ddd;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .hike-card:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .hike-card.priority-high {
+            border-left-color: var(--danger);
+            background: linear-gradient(135deg, #fff5f5 0%, white 100%);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
+        }
+
+        .hike-card.priority-high:hover {
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.2);
+        }
+
+        .hike-card.priority-medium {
+            border-left-color: var(--warning);
+            background: linear-gradient(135deg, #fffbf5 0%, white 100%);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.15);
+        }
+
+        .hike-card.priority-medium:hover {
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.2);
+        }
+
+        .hike-card.priority-low {
+            border-left-color: var(--success);
+            background: linear-gradient(135deg, #f5fff9 0%, white 100%);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.15);
+        }
+
+        .hike-card.priority-low:hover {
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.2);
+        }
+
+        .hike-header {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+
+        .hike-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hike-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dehike-black);
+        }
+
+        .hike-date {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .hike-tipo {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--dehike-primary);
+            color: white;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            width: fit-content;
+        }
+
+        .hike-tipo.experiencia {
+            background: #E74C3C;
+        }
+
+        .hike-tipo.costoso {
+            background: #F39C12;
+        }
+
+        .hike-tipo.basico {
+            background: #3498DB;
+        }
+
+        .hike-tipo.moderado {
+            background: #16A085;
+        }
+
+        .hike-tipo.avanzado {
+            background: #8E44AD;
+        }
+
+        .hike-quick-info {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .quick-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .quick-info-label {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            font-size: 10px;
+        }
+
+        .quick-info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dehike-primary);
+        }
+
+        /* OCCUPANCY BAR */
+        .occupancy-section {
+            margin-top: 20px;
+        }
+
+        .occupancy-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .occupancy-label-right {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .occupancy-container {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .occupancy-slot {
+            width: 24px;
+            height: 32px;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .occupancy-slot.filled {
+            background: var(--dehike-primary);
+            border-color: var(--dehike-primary);
+            color: white;
+        }
+
+        .occupancy-slot.below-min {
+            background: #FADBD8;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .occupancy-slot.min-to-obj {
+            background: #FEF5E7;
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .occupancy-slot.above-obj {
+            background: #D5F4E6;
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .occupancy-slot.available {
+            background: #f0f0f0;
+            border-color: #ddd;
+            color: #999;
+        }
+
+        /* GUÍAS ASIGNADOS */
+        .guias-asignados {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: var(--dehike-cream);
+            border-radius: 8px;
+        }
+
+        .guia-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: white;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border-left: 3px solid var(--dehike-primary);
+        }
+
+        .guia-badge.lider {
+            border-left-color: var(--dehike-dark);
+        }
+
+        .guia-badge.auxiliar {
+            border-left-color: var(--dehike-beige);
+        }
+
+        .guia-rol {
+            font-size: 9px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .btn-modificar {
+            padding: 8px 16px;
+            background: var(--dehike-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-modificar:hover {
+            background: #a85a1f;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dehike-dark);
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .guias-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .guia-input-group {
+            padding: 12px;
+            background: var(--dehike-cream);
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr 120px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .guia-input-group select {
+            padding: 8px;
+            border: 2px solid var(--dehike-beige);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .guia-input-group.empty {
+            opacity: 0.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-modal {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-guardar {
+            background: var(--dehike-primary);
+            color: white;
+        }
+
+        .btn-guardar:hover {
+            background: #a85a1f;
+        }
+
+        .btn-cancelar {
+            background: #ddd;
+            color: var(--dehike-black);
+        }
+
+        .btn-cancelar:hover {
+            background: #bbb;
+        }
+
+        .guias-info {
+            font-size: 11px;
+            color: #666;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .btn-modificar-asistentes {
+            padding: 8px 16px;
+            background: #3498DB;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-modificar-asistentes:hover {
+            background: #2980B9;
+        }
+
+        .asistentes-list-modal {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .asistente-input-group {
+            padding: 12px;
+            background: var(--dehike-cream);
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1fr 80px 30px;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .asistente-input-group input {
+            padding: 8px;
+            border: 2px solid var(--dehike-beige);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .asistente-input-group select {
+            padding: 8px;
+            border: 2px solid var(--dehike-beige);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .btn-eliminar-asistente {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .btn-eliminar-asistente:hover {
+            background: #c0392b;
+        }
+
+        .btn-agregar-asistente {
+            padding: 10px 16px;
+            background: #16A085;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .btn-agregar-asistente:hover {
+            background: #138D75;
+        }
+
+        .asistentes-info {
+            font-size: 11px;
+            color: #666;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        /* CLIENTE DETAILS MODAL */
+        .cliente-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--dehike-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cliente-info {
+            flex: 1;
+        }
+
+        .cliente-nombre {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dehike-dark);
+            margin-bottom: 6px;
+        }
+
+        .cliente-email {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .cliente-instagram {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .cliente-whatsapp {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .btn-ver-detalles {
+            padding: 6px 12px;
+            background: var(--dehike-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            margin-left: 10px;
+        }
+
+        .btn-ver-detalles:hover {
+            background: #a85a1f;
+        }
+
+        .modal-subtitle-detalles {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dehike-dark);
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .detalle-item {
+            padding: 12px;
+            background: var(--dehike-cream);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 12px;
+        }
+
+        .detalle-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .detalle-valor {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--dehike-dark);
+            word-break: break-all;
+        }
+
+        .detalle-valor a {
+            color: var(--dehike-primary);
+            text-decoration: none;
+        }
+
+        .detalle-valor a:hover {
+            text-decoration: underline;
+        }
+
+        .occupancy-legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        /* STATUS INDICATORS */
+        .status-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .status-badge-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            background: var(--dehike-cream);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dehike-dark);
+        }
+
+        /* TABLA DE BITÁCORAS */
+        .bitacoras-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .bitacoras-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .bitacoras-table thead {
+            background: var(--dehike-cream);
+            border-bottom: 2px solid var(--dehike-beige);
+        }
+
+        .bitacoras-table th {
+            padding: 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--dehike-dark);
+        }
+
+        .bitacoras-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 12px;
+        }
+
+        .bitacoras-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .badge-priority {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-priority.sent {
+            background: #D5F4E6;
+            color: var(--success);
+        }
+
+        .badge-priority.pending {
+            background: #FADBD8;
+            color: var(--danger);
+        }
+
+        /* FILTROS */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--dehike-beige);
+            background: white;
+            color: var(--dehike-black);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: var(--dehike-primary);
+            color: white;
+            border-color: var(--dehike-primary);
+        }
+
+        .filter-btn:hover {
+            background: var(--dehike-beige);
+            color: white;
+            border-color: var(--dehike-beige);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .hike-header {
+                grid-template-columns: 1fr;
+            }
+
+            .grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .card-value {
+                font-size: 24px;
+            }
+
+            .hike-name {
+                font-size: 14px;
+            }
+
+            .bitacoras-table {
+                font-size: 10px;
+            }
+
+            .bitacoras-table th,
+            .bitacoras-table td {
+                padding: 8px;
+            }
+
+            .hike-quick-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .occupancy-slot {
+                width: 20px;
+                height: 28px;
+                font-size: 9px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 DASHBOARD OPERATIVO DEHIKE</h1>
+        <p class="subtitle">Control en tiempo real de ocupación de hikes</p>
+    </div>
+
+    <div class="container">
+        <!-- KPIs PRINCIPALES -->
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Hikes Este Mes</div>
+                <div class="card-value" id="totalHikes">-</div>
+                <div class="card-description">Programados</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Asistentes Totales</div>
+                <div class="card-value" id="totalAsistentes">-</div>
+                <div class="card-description">En todos los hikes</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Bitácoras Enviadas</div>
+                <div class="card-value" id="bitacorasEnviadas">-</div>
+                <div class="card-description">De las esperadas</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Hikes en Objetivo</div>
+                <div class="card-value" id="hikesEnObjetivo">-</div>
+                <div class="card-description">Con ocupación OK</div>
+            </div>
+        </div>
+
+        <!-- HIKES IMPORTANTES EN EL RADAR -->
+        <div class="hikes-section">
+            <div class="section-title">
+                🎯 HIKES IMPORTANTES - EN EL RADAR
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Todos</button>
+                <button class="filter-btn" data-filter="experiencia">Experiencias</button>
+                <button class="filter-btn" data-filter="costoso">Costosos</button>
+                <button class="filter-btn" data-filter="priority">Necesitan Atención</button>
+            </div>
+
+            <div id="hikesContainer" class="loading">
+                Cargando datos...
+            </div>
+        </div>
+
+        <!-- BITÁCORAS PENDIENTES -->
+        <div class="bitacoras-section" style="margin-top: 30px;">
+            <div class="section-title">📋 BITÁCORAS - ESTADO</div>
+
+            <table class="bitacoras-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Ruta</th>
+                        <th>Tipo</th>
+                        <th>Guía Líder</th>
+                        <th>Asistentes</th>
+                        <th>Bitácora</th>
+                    </tr>
+                </thead>
+                <tbody id="bitacorasTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px;">Cargando bitácoras...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL GUÍAS -->
+    <div class="modal" id="guiasModal">
+        <div class="modal-content">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <!-- MODAL DETALLES CLIENTE -->
+    <div class="modal" id="clienteModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <!-- MODAL ASISTENTES -->
+    <div class="modal" id="asistenteModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <script>
+        // Configuración de hikes por tipo
+        const hikeConfig = {
+            'basico': { max: 8, objective: 8, min: 3, label: 'Básico' },
+            'moderado': { max: 8, objective: 8, min: 3, label: 'Moderado' },
+            'avanzado': { max: 15, objective: 7, min: 3, label: 'Avanzado' },
+        };
+
+        // Datos de ejemplo con guías asignados
+        const exampleHikes = [
+            {
+                id: 1,
+                name: '🎃 Malinche - Día de Muertos',
+                date: 'Jueves 24 de Octubre, 2026',
+                type: 'experiencia',
+                category: 'avanzado',
+                asistentes: 5,
+                guia_lider: 'Gonzalo Solis',
+                guias_auxiliares: ['Edgar Vera'],
+                bitacora: 'pendiente'
+            },
+            {
+                id: 2,
+                name: '🏔️ Nevado a Valle (2 días)',
+                date: 'Sábado 17 - Domingo 18 de Octubre',
+                type: 'experiencia',
+                category: 'avanzado',
+                asistentes: 10,
+                guia_lider: 'Karen Zinser',
+                guias_auxiliares: ['Ana Sofia Jacobo', 'Tamir Rubio'],
+                bitacora: 'pendiente'
+            },
+            {
+                id: 3,
+                name: '⛰️ Pico de Orizaba',
+                date: 'Viernes 25 de Octubre, 2026',
+                type: 'costoso',
+                category: 'avanzado',
+                asistentes: 4,
+                guia_lider: 'Edgar Vera',
+                guias_auxiliares: [],
+                bitacora: 'enviada'
+            },
+            {
+                id: 4,
+                name: 'Volcán Xitle',
+                date: 'Viernes 10 de Octubre, 2026',
+                type: 'normal',
+                category: 'moderado',
+                asistentes: 6,
+                guia_lider: 'Fabiola Solis',
+                guias_auxiliares: [],
+                bitacora: 'pendiente'
+            },
+            {
+                id: 5,
+                name: 'Pico del Águila',
+                date: 'Jueves 3 de Octubre, 2026',
+                type: 'normal',
+                category: 'moderado',
+                asistentes: 8,
+                guia_lider: 'Gonzalo Solis',
+                guias_auxiliares: ['Lu Villasenior'],
+                bitacora: 'enviada'
+            },
+            {
+                id: 6,
+                name: 'El Muro',
+                date: 'Viernes 4 de Octubre, 2026',
+                type: 'normal',
+                category: 'basico',
+                asistentes: 7,
+                guia_lider: 'Lu Villasenior',
+                guias_auxiliares: [],
+                bitacora: 'enviada'
+            }
+        ];
+
+        const todosLosGuias = [
+            'Gonzalo Solis', 'Lu Villasenior', 'Fabiola Solis', 'Diana Asomoza Solis',
+            'Frida Hoffman', 'Tamir Rubio', 'Edgar Vera', 'Ana Sofia Jacobo',
+            'Karen Zinser', 'Letty Romano', 'Saul Pelaez', 'Ben Reimers',
+            'Pablo Rivero', 'Angel Duran', 'Daniela', 'Javier Regalado', 'Poncho Leon'
+        ];
+
+        // Datos de clientes registrados
+        const clientesRegistrados = [
+            {
+                id: 1,
+                nombre: 'Carlos García López',
+                email: 'carlos.garcia@email.com',
+                instagram: '@carlosgarcia.mx',
+                whatsapp: '+52 55 1234 5678',
+                telefono: '55 1234 5678',
+                tipoSangre: 'O+',
+                alergias: 'Ninguna',
+                medicamentos: 'Ninguno'
+            },
+            {
+                id: 2,
+                nombre: 'María Rodríguez',
+                email: 'maria.rodriguez@email.com',
+                instagram: '@mariarod_',
+                whatsapp: '+52 55 8765 4321',
+                telefono: '55 8765 4321',
+                tipoSangre: 'A+',
+                alergias: 'Polen',
+                medicamentos: 'Antihistamínico'
+            },
+            {
+                id: 3,
+                nombre: 'Juan Martínez Peña',
+                email: 'juan.martinez@email.com',
+                instagram: '@juanmartinez',
+                whatsapp: '+52 55 5555 5555',
+                telefono: '55 5555 5555',
+                tipoSangre: 'B+',
+                alergias: 'Mariscos',
+                medicamentos: 'Ninguno'
+            },
+            {
+                id: 4,
+                nombre: 'Ana Lúcia Silva',
+                email: 'ana.silva@email.com',
+                instagram: '@analucia.hiking',
+                whatsapp: '+52 55 9999 9999',
+                telefono: '55 9999 9999',
+                tipoSangre: 'AB-',
+                alergias: 'Látex',
+                medicamentos: 'Metformina'
+            },
+            {
+                id: 5,
+                nombre: 'Roberto Vega Sánchez',
+                email: 'roberto.vega@email.com',
+                instagram: '@robeovega',
+                whatsapp: '+52 55 2222 2222',
+                telefono: '55 2222 2222',
+                tipoSangre: 'O-',
+                alergias: 'Cacahuate',
+                medicamentos: 'Atorvastatina'
+            }
+        ];
+
+        let currentHikeModal = null;
+
+        function calcularGuiasNecesarios(asistentes) {
+            return Math.ceil(asistentes / 4);
+        }
+
+        function createOccupancyBar(hike) {
+            const config = hikeConfig[hike.category];
+            const asistentes = hike.asistentes;
+            const max = config.max;
+            const objective = config.objective;
+            const min = config.min;
+
+            let html = '<div class="occupancy-container">';
+            
+            for (let i = 1; i <= max; i++) {
+                let slotClass = 'occupancy-slot';
+                
+                if (i <= asistentes) {
+                    slotClass += ' filled';
+                } else if (i <= min) {
+                    slotClass += ' below-min';
+                } else if (i <= objective) {
+                    slotClass += ' min-to-obj';
+                } else {
+                    slotClass += ' above-obj';
+                }
+                
+                html += `<div class="${slotClass}">${i}</div>`;
+            }
+            
+            html += '</div>';
+            return html;
+        }
+
+        function renderGuiasAsignados(hike) {
+            let html = '<div class="guias-asignados">';
+            
+            html += `<div class="guia-badge lider">👤 ${hike.guia_lider}<span class="guia-rol">(Lider)</span></div>`;
+            
+            hike.guias_auxiliares.forEach(guia => {
+                html += `<div class="guia-badge auxiliar">👥 ${guia}<span class="guia-rol">(Aux)</span></div>`;
+            });
+            
+            html += '</div>';
+            return html;
+        }
+
+        function renderHikes(filter = 'all') {
+            const container = document.getElementById('hikesContainer');
+            const filteredHikes = exampleHikes.filter(hike => {
+                if (filter === 'all') return true;
+                if (filter === 'priority') {
+                    const priority = getPriority(hike);
+                    return priority === 'high';
+                }
+                return hike.type === filter;
+            });
+
+            if (filteredHikes.length === 0) {
+                container.innerHTML = '<p class="loading">No hay hikes que mostrar</p>';
+                return;
+            }
+
+            container.innerHTML = filteredHikes.map(hike => {
+                const priority = getPriority(hike);
+                const config = hikeConfig[hike.category];
+                const isBelowMinimum = hike.asistentes < config.min;
+                const isBelowObjective = hike.asistentes < config.objective;
+                const guiasNecesarios = calcularGuiasNecesarios(hike.asistentes);
+                const guiasActuales = 1 + hike.guias_auxiliares.length;
+                
+                let typeClass = 'hike-tipo ' + hike.category;
+                if (hike.type === 'experiencia') typeClass = 'hike-tipo experiencia';
+                if (hike.type === 'costoso') typeClass = 'hike-tipo costoso';
+
+                return `
+                    <div class="hike-card priority-${priority}" data-type="${hike.type}">
+                        <div class="hike-header">
+                            <div class="hike-info">
+                                <div class="hike-name">${hike.name}</div>
+                                <div class="hike-date">${hike.date}</div>
+                                <span class="${typeClass}">${hike.type.toUpperCase()}</span>
+                            </div>
+                            <div class="hike-quick-info">
+                                <div class="quick-info-item">
+                                    <div class="quick-info-label">Asistentes</div>
+                                    <div class="quick-info-value">${hike.asistentes} / ${config.max}</div>
+                                </div>
+                                <div class="quick-info-item">
+                                    <div class="quick-info-label">Guías</div>
+                                    <div class="quick-info-value">${guiasActuales} / ${guiasNecesarios}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="occupancy-section">
+                            <div class="occupancy-label">
+                                <span>OCUPACIÓN</span>
+                                ${isBelowMinimum ? '<span class="occupancy-label-right" style="color: var(--danger);">⚠️ BAJO MÍNIMO</span>' : ''}
+                                ${isBelowObjective && !isBelowMinimum ? '<span class="occupancy-label-right" style="color: var(--warning);">⚠️ BAJO OBJETIVO</span>' : ''}
+                                ${!isBelowObjective ? '<span class="occupancy-label-right" style="color: var(--success);">✓ EN OBJETIVO</span>' : ''}
+                            </div>
+                            ${createOccupancyBar(hike)}
+                        </div>
+
+                        ${renderGuiasAsignados(hike)}
+
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+                            <div style="font-size: 12px; font-weight: 700; margin-bottom: 10px; color: var(--dehike-dark);">👥 ASISTENTES (${hike.asistentes})</div>
+                            <div id="asistentes-${hike.id}" style="display: grid; gap: 8px; max-height: 300px; overflow-y: auto;">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <button class="btn-modificar" data-hike-id="${hike.id}" style="width: 100%; margin-bottom: 10px;">✏️ CONFIRMAR / MODIFICAR GUÍAS</button>
+                            <button class="btn-modificar-asistentes" data-hike-id="${hike.id}" style="width: 100%;">👥 CONFIRMAR / MODIFICAR ASISTENTES</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Agregar event listeners a los botones
+            document.querySelectorAll('.btn-modificar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const hikeId = parseInt(e.target.dataset.hikeId);
+                    openGuiasModal(hikeId);
+                });
+            });
+
+            document.querySelectorAll('.btn-modificar-asistentes').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const hikeId = parseInt(e.target.dataset.hikeId);
+                    openAsistentesModal(hikeId);
+                });
+            });
+
+            // Renderizar asistentes para cada hike
+            filteredHikes.forEach(hike => {
+                renderAsistentes(hike.id);
+            });
+        }
+
+        function openGuiasModal(hikeId) {
+            const hike = exampleHikes.find(h => h.id === hikeId);
+            if (!hike) return;
+
+            const guiasNecesarios = calcularGuiasNecesarios(hike.asistentes);
+            currentHikeModal = hikeId;
+
+            let html = `
+                <div class="modal-title">Guías - ${hike.name}</div>
+                <div class="guias-info">
+                    ${hike.asistentes} asistentes → Se necesitan ${guiasNecesarios} guía(s) (1 por cada 4 personas)
+                </div>
+                <div class="modal-subtitle">Selecciona el Guía Líder y los Auxiliares</div>
+                <div class="guias-list" id="guiasListContainer">
+            `;
+
+            // Guía Líder
+            html += `
+                <div class="guia-input-group">
+                    <div>
+                        <div style="font-size: 11px; font-weight: 700; margin-bottom: 6px; color: #666;">GUÍA LÍDER *</div>
+                        <select id="guiaLider" style="width: 100%;">
+                            <option value="">Selecciona...</option>
+            `;
+            
+            todosLosGuias.forEach(guia => {
+                const selected = guia === hike.guia_lider ? 'selected' : '';
+                html += `<option value="${guia}" ${selected}>${guia}</option>`;
+            });
+            
+            html += `
+                        </select>
+                    </div>
+                    <span style="font-size: 10px; font-weight: 700; color: var(--dehike-dark); margin-top: 15px;">👤 LIDER</span>
+                </div>
+            `;
+
+            // Guías Auxiliares
+            for (let i = 1; i < guiasNecesarios; i++) {
+                const guiaAuxActual = hike.guias_auxiliares[i - 1] || '';
+                
+                html += `
+                    <div class="guia-input-group ${!guiaAuxActual ? 'empty' : ''}">
+                        <div>
+                            <div style="font-size: 11px; font-weight: 700; margin-bottom: 6px; color: #666;">GUÍA AUXILIAR ${i}</div>
+                            <select class="guiaAuxiliar" style="width: 100%;">
+                                <option value="">Selecciona...</option>
+                `;
+                
+                todosLosGuias.forEach(guia => {
+                    const selected = guia === guiaAuxActual ? 'selected' : '';
+                    html += `<option value="${guia}" ${selected}>${guia}</option>`;
+                });
+                
+                html += `
+                            </select>
+                        </div>
+                        <span style="font-size: 10px; font-weight: 700; color: var(--dehike-beige); margin-top: 15px;">👥 AUX</span>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+
+            const modal = document.getElementById('guiasModal');
+            modal.querySelector('.modal-content').innerHTML = html + `
+                <div class="modal-buttons" style="margin-top: 20px;">
+                    <button class="btn-modal btn-cancelar" onclick="closeGuiasModal()">Cancelar</button>
+                    <button class="btn-modal btn-guardar" onclick="guardarGuias()">Guardar</button>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeGuiasModal() {
+            document.getElementById('guiasModal').classList.remove('active');
+            currentHikeModal = null;
+        }
+
+        function guardarGuias() {
+            if (currentHikeModal === null) return;
+
+            const hike = exampleHikes.find(h => h.id === currentHikeModal);
+            const guiaLider = document.getElementById('guiaLider').value;
+            const guiasAuxiliares = Array.from(document.querySelectorAll('.guiaAuxiliar'))
+                .map(sel => sel.value)
+                .filter(val => val !== '');
+
+            if (!guiaLider) {
+                alert('Selecciona un Guía Líder');
+                return;
+            }
+
+            hike.guia_lider = guiaLider;
+            hike.guias_auxiliares = guiasAuxiliares;
+
+            closeGuiasModal();
+            renderHikes(document.querySelector('.filter-btn.active').dataset.filter);
+        }
+
+        function openClienteModal(clienteId) {
+            const cliente = clientesRegistrados.find(c => c.id === clienteId);
+            if (!cliente) return;
+
+            let html = `
+                <div class="modal-title">👤 ${cliente.nombre}</div>
+                <div class="modal-subtitle-detalles">Información de Registro</div>
+                
+                <div class="detalle-item">
+                    <div class="detalle-label">Email</div>
+                    <div class="detalle-valor"><a href="mailto:${cliente.email}">${cliente.email}</a></div>
+                </div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">WhatsApp</div>
+                    <div class="detalle-valor"><a href="https://wa.me/${cliente.whatsapp.replace(/\D/g, '')}" target="_blank">${cliente.whatsapp}</a></div>
+                </div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">Instagram</div>
+                    <div class="detalle-valor"><a href="https://instagram.com/${cliente.instagram.replace('@', '')}" target="_blank">${cliente.instagram}</a></div>
+                </div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">Teléfono</div>
+                    <div class="detalle-valor">${cliente.telefono}</div>
+                </div>
+
+                <div class="modal-subtitle-detalles">Información Médica</div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">Tipo Sangre</div>
+                    <div class="detalle-valor">${cliente.tipoSangre}</div>
+                </div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">Alergias</div>
+                    <div class="detalle-valor">${cliente.alergias}</div>
+                </div>
+
+                <div class="detalle-item">
+                    <div class="detalle-label">Medicamentos</div>
+                    <div class="detalle-valor">${cliente.medicamentos}</div>
+                </div>
+
+                <div class="modal-buttons" style="margin-top: 20px;">
+                    <button class="btn-modal btn-cancelar" onclick="closeClienteModal()">Cerrar</button>
+                </div>
+            `;
+
+            const modal = document.getElementById('clienteModal');
+            modal.querySelector('.modal-content').innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeClienteModal() {
+            document.getElementById('clienteModal').classList.remove('active');
+        }
+
+        let currentHikeAsistentes = null;
+
+        function openAsistentesModal(hikeId) {
+            const hike = exampleHikes.find(h => h.id === hikeId);
+            if (!hike) return;
+
+            currentHikeAsistentes = hikeId;
+            const asistentesPorHike = {
+                1: [1, 2, 5],
+                2: [1, 3, 4],
+                3: [2, 4],
+                4: [1, 5],
+                5: [2, 3],
+                6: [1, 2, 3, 4, 5]
+            };
+
+            const idsAsistentes = asistentesPorHike[hikeId] || [];
+            const asistentes = idsAsistentes.map(id => clientesRegistrados.find(c => c.id === id)).filter(Boolean);
+
+            let html = `
+                <div class="modal-title">Asistentes - ${hike.name}</div>
+                <div class="asistentes-info">
+                    Total actual: ${asistentes.length} asistentes
+                </div>
+                <button class="btn-agregar-asistente" onclick="agregarAsistenteVacio()">+ AGREGAR ASISTENTE</button>
+                <div class="asistentes-list-modal" id="asistentesList">
+            `;
+
+            asistentes.forEach((asistente, idx) => {
+                html += `
+                    <div class="asistente-input-group">
+                        <input type="text" value="${asistente.nombre}" placeholder="Nombre" class="asistente-nombre">
+                        <input type="email" value="${asistente.email}" placeholder="Email" class="asistente-email">
+                        <button class="btn-eliminar-asistente" onclick="eliminarAsistente(${idx})">✕</button>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+
+            const modal = document.getElementById('asistenteModal');
+            modal.querySelector('.modal-content').innerHTML = html + `
+                <div class="modal-buttons" style="margin-top: 20px;">
+                    <button class="btn-modal btn-cancelar" onclick="closeAsistentesModal()">Cancelar</button>
+                    <button class="btn-modal btn-guardar" onclick="guardarAsistentes()">Guardar</button>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeAsistentesModal() {
+            document.getElementById('asistenteModal').classList.remove('active');
+            currentHikeAsistentes = null;
+        }
+
+        function agregarAsistenteVacio() {
+            const lista = document.getElementById('asistentesList');
+            const newIndex = lista.children.length;
+            const nuevoAsistente = document.createElement('div');
+            nuevoAsistente.className = 'asistente-input-group';
+            nuevoAsistente.innerHTML = `
+                <input type="text" placeholder="Nombre" class="asistente-nombre">
+                <input type="email" placeholder="Email" class="asistente-email">
+                <button class="btn-eliminar-asistente" onclick="eliminarAsistente(${newIndex})">✕</button>
+            `;
+            lista.appendChild(nuevoAsistente);
+        }
+
+        function eliminarAsistente(idx) {
+            const lista = document.getElementById('asistentesList');
+            if (lista.children[idx]) {
+                lista.children[idx].remove();
+            }
+        }
+
+        function guardarAsistentes() {
+            if (currentHikeAsistentes === null) return;
+
+            const hike = exampleHikes.find(h => h.id === currentHikeAsistentes);
+            const asistenteInputs = document.querySelectorAll('.asistente-input-group');
+            
+            // En producción, aquí guardarías en Google Sheet
+            console.log(`Asistentes actualizados para ${hike.name}:`, asistenteInputs.length);
+
+            closeAsistentesModal();
+            renderHikes(document.querySelector('.filter-btn.active').dataset.filter);
+        }
+
+        function renderAsistentes(hikeId) {
+            const container = document.getElementById(`asistentes-${hikeId}`);
+            if (!container) return;
+
+            // Simular que tenemos algunos clientes registrados para este hike
+            // En producción, esto vendría de Google Sheet
+            const asistentesPorHike = {
+                1: [1, 2, 5], // Malinche: Carlos, María, Roberto
+                2: [1, 3, 4], // Nevado: Carlos, Juan, Ana
+                3: [2, 4], // Pico: María, Ana
+                4: [1, 5], // Xitle: Carlos, Roberto
+                5: [2, 3], // Pico del Águila: María, Juan
+                6: [1, 2, 3, 4, 5] // El Muro: Todos (ejemplo)
+            };
+
+            const idsAsistentes = asistentesPorHike[hikeId] || [];
+            const asistentes = idsAsistentes.map(id => clientesRegistrados.find(c => c.id === id)).filter(Boolean);
+
+            if (asistentes.length === 0) {
+                container.innerHTML = '<div style="font-size: 12px; color: #999; padding: 10px;">Aún no hay asistentes registrados</div>';
+                return;
+            }
+
+            container.innerHTML = asistentes.map(cliente => `
+                <div class="cliente-card">
+                    <div class="cliente-info">
+                        <div class="cliente-nombre">${cliente.nombre}</div>
+                        <div class="cliente-email">${cliente.email}</div>
+                        <div class="cliente-instagram">${cliente.instagram}</div>
+                        <div class="cliente-whatsapp">${cliente.whatsapp}</div>
+                    </div>
+                    <button class="btn-ver-detalles" onclick="openClienteModal(${cliente.id})">Ver más</button>
+                </div>
+            `).join('');
+        }
+
+        function getPriority(hike) {
+            const config = hikeConfig[hike.category];
+            const asistentes = hike.asistentes;
+            
+            if (hike.type === 'experiencia' || hike.type === 'costoso') {
+                return 'high';
+            }
+            
+            if (asistentes < config.min) {
+                return 'high';
+            }
+            
+            if (asistentes < config.objective) {
+                return 'medium';
+            }
+            
+            return 'low';
+        }
+
+        // Event listeners para filtros
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderHikes(btn.dataset.filter);
+            });
+        });
+
+        // Cargar datos iniciales
+        window.addEventListener('load', () => {
+            renderHikes();
+            
+            // Calcular KPIs
+            document.getElementById('totalHikes').textContent = exampleHikes.length;
+            document.getElementById('totalAsistentes').textContent = exampleHikes.reduce((sum, h) => sum + h.asistentes, 0);
+            document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
+            
+            const hikesEnObjetivo = exampleHikes.filter(h => {
+                const config = hikeConfig[h.category];
+                return h.asistentes >= config.objective;
+            }).length;
+            document.getElementById('hikesEnObjetivo').textContent = hikesEnObjetivo;
+
+            // Llenar tabla de bitácoras
+            const tbody = document.getElementById('bitacorasTableBody');
+            tbody.innerHTML = exampleHikes.map(h => `
+                <tr>
+                    <td>${h.date.split(',')[0]}</td>
+                    <td>${h.name}</td>
+                    <td><span class="hike-tipo ${h.category}">${hikeConfig[h.category].label}</span></td>
+                    <td>${h.guia_lider}</td>
+                    <td>${h.asistentes}</td>
+                    <td><span class="badge-priority ${h.bitacora}">${h.bitacora === 'enviada' ? '✅ ENVIADA' : '❌ PENDIENTE'}</span></td>
+                </tr>
+            `).join('');
+
+            // Cerrar modal al hacer click fuera
+            document.getElementById('guiasModal').addEventListener('click', (e) => {
+                if (e.target.id === 'guiasModal') {
+                    closeGuiasModal();
+                }
+            });
+
+            document.getElementById('clienteModal').addEventListener('click', (e) => {
+                if (e.target.id === 'clienteModal') {
+                    closeClienteModal();
+                }
+            });
+
+            document.getElementById('asistenteModal').addEventListener('click', (e) => {
+                if (e.target.id === 'asistenteModal') {
+                    closeAsistentesModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
