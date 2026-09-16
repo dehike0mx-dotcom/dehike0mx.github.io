@@ -38,18 +38,101 @@
             border-radius: 12px;
             margin-bottom: 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .header h1 {
+        .header-content h1 {
             font-size: 32px;
             font-weight: 700;
             letter-spacing: 1px;
             margin-bottom: 8px;
         }
 
-        .header .subtitle {
+        .header-content .subtitle {
             font-size: 14px;
             opacity: 0.9;
+        }
+
+        .btn-sync {
+            padding: 12px 24px;
+            background: #00A8E8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-sync:hover {
+            background: #0090BB;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 168, 232, 0.3);
+        }
+
+        .btn-sync.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .sync-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 999;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+
+        .sync-status.success {
+            background: var(--success);
+            color: white;
+        }
+
+        .sync-status.error {
+            background: var(--danger);
+            color: white;
+        }
+
+        .sync-status.loading {
+            background: var(--info);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .container {
@@ -873,8 +956,14 @@
 </head>
 <body>
     <div class="header">
-        <h1>📊 DASHBOARD OPERATIVO DEHIKE</h1>
-        <p class="subtitle">Control en tiempo real de ocupación de hikes</p>
+        <div class="header-content">
+            <h1>📊 DASHBOARD OPERATIVO DEHIKE</h1>
+            <p class="subtitle">Control en tiempo real de ocupación de hikes</p>
+        </div>
+        <button class="btn-sync" id="syncBtn" onclick="syncWithStripe()">
+            <span id="syncIcon">⚡</span>
+            <span id="syncText">SYNC STRIPE</span>
+        </button>
     </div>
 
     <div class="container">
@@ -1503,6 +1592,65 @@
 
             closeAsistentesModal();
             renderHikes(document.querySelector('.filter-btn.active').dataset.filter);
+        }
+
+        function showSyncStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `sync-status ${type}`;
+            statusDiv.textContent = message;
+            document.body.appendChild(statusDiv);
+
+            setTimeout(() => {
+                statusDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => statusDiv.remove(), 300);
+            }, 3000);
+        }
+
+        async function syncWithStripe() {
+            const btn = document.getElementById('syncBtn');
+            const syncIcon = document.getElementById('syncIcon');
+            const syncText = document.getElementById('syncText');
+
+            // Mostrar estado de carga
+            btn.classList.add('loading');
+            syncIcon.innerHTML = '<span class="sync-spinner"></span>';
+            syncText.textContent = 'SINCRONIZANDO...';
+
+            showSyncStatus('⏳ Sincronizando datos de Stripe...', 'loading');
+
+            try {
+                // URL de Google Apps Script
+                const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7Qmcdp-WtQcarg4YdQvVk6O8ZNqbEQHIyqk1t1A-es2lD-mDD1lUunph249GSuZX60g/exec';
+
+                // Llamar a Google Apps Script para sincronizar con Stripe
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'syncStripeToBitacora' })
+                });
+
+                const data = await response.json();
+
+                if (data.success || response.ok) {
+                    console.log('✅ Sincronización completada con Stripe');
+                    showSyncStatus('✅ Datos sincronizados con Stripe correctamente', 'success');
+                    
+                    // Recargar hikes después de 1 segundo
+                    setTimeout(() => {
+                        renderHikes(document.querySelector('.filter-btn.active').dataset.filter);
+                    }, 1000);
+                } else {
+                    throw new Error(data.error || 'Error en la sincronización');
+                }
+
+            } catch (error) {
+                console.error('❌ Error sincronizando:', error);
+                showSyncStatus('❌ Error al sincronizar. Intenta de nuevo.', 'error');
+            } finally {
+                // Restaurar botón
+                btn.classList.remove('loading');
+                syncIcon.innerHTML = '⚡';
+                syncText.textContent = 'SYNC STRIPE';
+            }
         }
 
         function renderAsistentes(hikeId) {
