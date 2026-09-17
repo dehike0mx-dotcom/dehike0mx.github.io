@@ -1079,24 +1079,45 @@
                     return [];
                 }
                 
-                // Convertir y limpiar datos - SIN parsear fechas aún
-                const loadedHikes = hikesData.map((h, idx) => {
-                    return {
-                        id: idx + 1,
-                        name: h.name || 'Sin nombre',
-                        category: (h.category || 'moderado').toLowerCase().trim(),
-                        date: h.date || '', // Guardar como string DD/MM/YY
-                        dateString: h.date || '',
-                        week: h.week || '',
-                        asistentes: 0,
-                        guia_lider: h.guiaLider || 'Por asignar',
-                        guias_auxiliares: [],
-                        type: 'normal',
-                        bitacora: 'pendiente'
-                    };
-                });
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
                 
-                console.log('✅ Hikes cargados desde Google Sheets:', loadedHikes.length);
+                // Convertir y filtrar solo hikes FUTUROS
+                const loadedHikes = hikesData
+                    .map((h, idx) => {
+                        // Parsear fecha DD/MM/YY
+                        let fecha = null;
+                        try {
+                            const partes = h.date.split('/');
+                            if (partes.length === 3) {
+                                const day = parseInt(partes[0]);
+                                const month = parseInt(partes[1]);
+                                const year = 2000 + parseInt(partes[2]);
+                                fecha = new Date(year, month - 1, day);
+                            }
+                        } catch(e) {
+                            console.error('Error parseando fecha:', h.date);
+                            return null;
+                        }
+                        
+                        return {
+                            id: idx + 1,
+                            name: h.name || 'Sin nombre',
+                            category: (h.category || 'moderado').toLowerCase().trim(),
+                            date: fecha,
+                            dateString: h.date || '',
+                            week: h.week || '',
+                            asistentes: 0,
+                            guia_lider: h.guiaLider || 'Por asignar',
+                            guias_auxiliares: [],
+                            type: 'normal',
+                            bitacora: 'pendiente'
+                        };
+                    })
+                    .filter(h => h !== null && h.date >= today) // Solo hikes futuros
+                    .sort((a, b) => a.date - b.date); // Ordenar por fecha (más cercano primero)
+                
+                console.log('✅ Hikes futuros cargados:', loadedHikes.length);
                 return loadedHikes;
             } catch (error) {
                 console.error('❌ Error cargando hikes:', error);
@@ -1254,8 +1275,8 @@
         }
 
         function createOccupancyBar(hike) {
-            const config = hikeConfig[hike.category];
-            const asistentes = hike.asistentes;
+            const config = hikeConfig[hike.category] || hikeConfig['moderado'];
+            const asistentes = hike.asistentes || 0;
             const max = config.max;
             const objective = config.objective;
             const min = config.min;
@@ -1313,7 +1334,7 @@
 
             container.innerHTML = filteredHikes.map(hike => {
                 const priority = getPriority(hike);
-                const config = hikeConfig[hike.category];
+                const config = hikeConfig[hike.category] || hikeConfig['moderado'];
                 const isBelowMinimum = hike.asistentes < config.min;
                 const isBelowObjective = hike.asistentes < config.objective;
                 const guiasNecesarios = calcularGuiasNecesarios(hike.asistentes);
@@ -1687,8 +1708,8 @@
                     document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
                     
                     const hikesEnObjetivo = exampleHikes.filter(h => {
-                        const config = hikeConfig[h.category];
-                        return (h.asistentes || 0) >= (config ? config.objective : 0);
+                        const config = hikeConfig[h.category] || hikeConfig['moderado'];
+                        return (h.asistentes || 0) >= config.objective;
                     }).length;
                     document.getElementById('hikesEnObjetivo').textContent = hikesEnObjetivo;
                 } else {
@@ -1790,21 +1811,12 @@
         }
 
         function getPriority(hike) {
-            const config = hikeConfig[hike.category] || hikeConfig['moderado']; // Default a moderado
+            const config = hikeConfig[hike.category] || hikeConfig['moderado'];
             const asistentes = hike.asistentes || 0;
             
-            if (hike.type === 'experiencia' || hike.type === 'costoso') {
-                return 'high';
-            }
-            
-            if (config && asistentes < config.min) {
-                return 'high';
-            }
-            
-            if (config && asistentes < config.objective) {
-                return 'medium';
-            }
-            
+            // Simple: bajo mínimo = high, bajo objetivo = medium, resto = low
+            if (asistentes < config.min) return 'high';
+            if (asistentes < config.objective) return 'medium';
             return 'low';
         }
 
@@ -1838,23 +1850,26 @@
             document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
             
             const hikesEnObjetivo = exampleHikes.filter(h => {
-                const config = hikeConfig[h.category];
+                const config = hikeConfig[h.category] || hikeConfig['moderado'];
                 return (h.asistentes || 0) >= config.objective;
             }).length;
             document.getElementById('hikesEnObjetivo').textContent = hikesEnObjetivo;
 
             // Llenar tabla de bitácoras
             const tbody = document.getElementById('bitacorasTableBody');
-            tbody.innerHTML = exampleHikes.map(h => `
+            tbody.innerHTML = exampleHikes.map(h => {
+                const config = hikeConfig[h.category] || hikeConfig['moderado'];
+                return `
                 <tr>
                     <td>${h.dateString || (typeof h.date === 'string' ? h.date.split(',')[0] : new Date(h.date).toLocaleDateString('es-MX'))}</td>
                     <td>${h.name}</td>
-                    <td><span class="hike-tipo ${h.category}">${hikeConfig[h.category]?.label || 'Normal'}</span></td>
+                    <td><span class="hike-tipo ${h.category}">${config?.label || 'Normal'}</span></td>
                     <td>${h.guia_lider || 'Por asignar'}</td>
                     <td>${h.asistentes}</td>
                     <td><span class="badge-priority ${h.bitacora}">${h.bitacora === 'enviada' ? '✅ ENVIADA' : '❌ PENDIENTE'}</span></td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
 
             // Cerrar modal al hacer click fuera
             document.getElementById('guiasModal').addEventListener('click', (e) => {
