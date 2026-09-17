@@ -1790,18 +1790,18 @@
         }
 
         function getPriority(hike) {
-            const config = hikeConfig[hike.category];
-            const asistentes = hike.asistentes;
+            const config = hikeConfig[hike.category] || hikeConfig['moderado']; // Default a moderado
+            const asistentes = hike.asistentes || 0;
             
             if (hike.type === 'experiencia' || hike.type === 'costoso') {
                 return 'high';
             }
             
-            if (asistentes < config.min) {
+            if (config && asistentes < config.min) {
                 return 'high';
             }
             
-            if (asistentes < config.objective) {
+            if (config && asistentes < config.objective) {
                 return 'medium';
             }
             
