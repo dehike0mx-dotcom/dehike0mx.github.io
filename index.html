@@ -1074,32 +1074,21 @@
                 const response = await fetch(GOOGLE_APPS_SCRIPT_HIKES_URL);
                 const hikesData = await response.json();
                 
-                // Convertir y limpiar datos
+                if (!hikesData || hikesData.length === 0) {
+                    console.log('⚠️ No hay hikes en la respuesta');
+                    return [];
+                }
+                
+                // Convertir y limpiar datos - SIN parsear fechas aún
                 const loadedHikes = hikesData.map((h, idx) => {
-                    // Parsear fecha en formato DD/MM/YY
-                    let fecha = new Date();
-                    if (h.date) {
-                        try {
-                            const partes = h.date.split('/');
-                            if (partes.length === 3) {
-                                const day = parseInt(partes[0]);
-                                const month = parseInt(partes[1]);
-                                const year = 2000 + parseInt(partes[2]);
-                                fecha = new Date(year, month - 1, day);
-                            }
-                        } catch(e) {
-                            console.error('Error parseando fecha:', h.date);
-                        }
-                    }
-                    
                     return {
                         id: idx + 1,
                         name: h.name || 'Sin nombre',
                         category: (h.category || 'moderado').toLowerCase().trim(),
-                        date: fecha,
-                        dateString: fecha.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                        date: h.date || '', // Guardar como string DD/MM/YY
+                        dateString: h.date || '',
                         week: h.week || '',
-                        asistentes: 0, // Siempre 0 hasta conectar con Stripe
+                        asistentes: 0,
                         guia_lider: h.guiaLider || 'Por asignar',
                         guias_auxiliares: [],
                         type: 'normal',
@@ -1107,20 +1096,10 @@
                     };
                 });
                 
-                // ORDENAR por fecha: más cercano primero
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const sortedHikes = loadedHikes.sort((a, b) => {
-                    const distA = Math.abs(a.date - today);
-                    const distB = Math.abs(b.date - today);
-                    return distA - distB; // Más cercano primero
-                });
-                
-                console.log('✅ Hikes cargados desde Google Sheets:', sortedHikes.length);
-                return sortedHikes;
+                console.log('✅ Hikes cargados desde Google Sheets:', loadedHikes.length);
+                return loadedHikes;
             } catch (error) {
-                console.error('Error cargando hikes desde Sheets:', error);
+                console.error('❌ Error cargando hikes:', error);
                 return [];
             }
         }
