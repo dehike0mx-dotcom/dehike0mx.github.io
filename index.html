@@ -960,10 +960,16 @@
             <h1>📊 DASHBOARD OPERATIVO DEHIKE</h1>
             <p class="subtitle">Control en tiempo real de ocupación de hikes</p>
         </div>
-        <button class="btn-sync" id="syncBtn" onclick="syncWithStripe()">
-            <span id="syncIcon">⚡</span>
-            <span id="syncText">SYNC STRIPE</span>
-        </button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-sync" id="updateBtn" onclick="updateDataFromSheets()" style="background: #27AE60;">
+                <span id="updateIcon">🔄</span>
+                <span id="updateText">ACTUALIZAR DATOS</span>
+            </button>
+            <button class="btn-sync" id="syncBtn" onclick="syncWithStripe()">
+                <span id="syncIcon">⚡</span>
+                <span id="syncText">SYNC STRIPE</span>
+            </button>
+        </div>
     </div>
 
     <div class="container">
@@ -1068,8 +1074,41 @@
                 const response = await fetch(GOOGLE_APPS_SCRIPT_HIKES_URL);
                 const hikesData = await response.json();
                 
-                console.log('✅ Hikes cargados desde Google Sheets:', hikesData.length);
-                return hikesData || [];
+                // Convertir y limpiar datos
+                const loadedHikes = hikesData.map((h, idx) => {
+                    // Parsear fecha en formato DD/MM/YY
+                    let fecha = new Date();
+                    if (h.date) {
+                        try {
+                            const partes = h.date.split('/');
+                            if (partes.length === 3) {
+                                const day = parseInt(partes[0]);
+                                const month = parseInt(partes[1]);
+                                const year = 2000 + parseInt(partes[2]);
+                                fecha = new Date(year, month - 1, day);
+                            }
+                        } catch(e) {
+                            console.error('Error parseando fecha:', h.date);
+                        }
+                    }
+                    
+                    return {
+                        id: idx + 1,
+                        name: h.name || 'Sin nombre',
+                        category: (h.category || 'moderado').toLowerCase().trim(),
+                        date: fecha,
+                        dateString: fecha.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                        week: h.week || '',
+                        asistentes: 0, // Siempre 0 hasta conectar con Stripe
+                        guia_lider: h.guiaLider || 'Por asignar',
+                        guias_auxiliares: [],
+                        type: 'normal',
+                        bitacora: 'pendiente'
+                    };
+                });
+                
+                console.log('✅ Hikes cargados desde Google Sheets:', loadedHikes.length);
+                return loadedHikes;
             } catch (error) {
                 console.error('Error cargando hikes desde Sheets:', error);
                 return [];
@@ -1624,6 +1663,51 @@
             }, 3000);
         }
 
+        async function updateDataFromSheets() {
+            const btn = document.getElementById('updateBtn');
+            const updateIcon = document.getElementById('updateIcon');
+            const updateText = document.getElementById('updateText');
+
+            // Mostrar estado de carga
+            btn.classList.add('loading');
+            updateIcon.innerHTML = '<span class="sync-spinner"></span>';
+            updateText.textContent = 'ACTUALIZANDO...';
+
+            showSyncStatus('⏳ Actualizando datos desde Google Sheets...', 'loading');
+
+            try {
+                // Cargar hikes desde Google Sheets
+                const sheetHikes = await loadHikesFromSheets();
+                
+                if (sheetHikes.length > 0) {
+                    // Reemplazar hikes globales
+                    exampleHikes.length = 0;
+                    exampleHikes.push(...sheetHikes);
+                    
+                    console.log('✅ Dashboard actualizado:', sheetHikes.length, 'hikes');
+                    showSyncStatus('✅ Datos actualizados correctamente', 'success');
+                    
+                    // Recargar dashboard
+                    renderHikes(document.querySelector('.filter-btn.active')?.dataset.filter || 'todos');
+                    
+                    // Actualizar KPIs
+                    document.getElementById('totalHikes').textContent = exampleHikes.length;
+                    document.getElementById('totalAsistentes').textContent = exampleHikes.reduce((sum, h) => sum + (h.asistentes || 0), 0);
+                } else {
+                    throw new Error('No se cargaron hikes desde Google Sheets');
+                }
+
+            } catch (error) {
+                console.error('❌ Error actualizando:', error);
+                showSyncStatus('❌ Error al actualizar. Intenta de nuevo.', 'error');
+            } finally {
+                // Restaurar botón
+                btn.classList.remove('loading');
+                updateIcon.innerHTML = '🔄';
+                updateText.textContent = 'ACTUALIZAR DATOS';
+            }
+        }
+
         async function syncWithStripe() {
             const btn = document.getElementById('syncBtn');
             const syncIcon = document.getElementById('syncIcon');
@@ -1737,22 +1821,25 @@
 
         // Cargar datos iniciales
         window.addEventListener('load', async () => {
-            // Cargar hikes desde Google Sheets
+            // Cargar hikes desde Google Sheets una sola vez
             const sheetHikes = await loadHikesFromSheets();
             
             // Usar hikes de Sheets si existen, sino usar ejemplos
-            const hikesToUse = sheetHikes.length > 0 ? sheetHikes : exampleHikes;
+            if (sheetHikes.length > 0) {
+                exampleHikes.length = 0;
+                exampleHikes.push(...sheetHikes);
+            }
             
-            console.log('📊 Hikes cargados:', hikesToUse.length);
+            console.log('📊 Hikes cargados:', exampleHikes.length);
             
             renderHikes();
             
             // Calcular KPIs
-            document.getElementById('totalHikes').textContent = hikesToUse.length;
-            document.getElementById('totalAsistentes').textContent = hikesToUse.reduce((sum, h) => sum + (h.asistentes || 0), 0);
-            document.getElementById('bitacorasEnviadas').textContent = hikesToUse.filter(h => h.bitacora === 'enviada').length;
+            document.getElementById('totalHikes').textContent = exampleHikes.length;
+            document.getElementById('totalAsistentes').textContent = exampleHikes.reduce((sum, h) => sum + (h.asistentes || 0), 0);
+            document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
             
-            const hikesEnObjetivo = hikesToUse.filter(h => {
+            const hikesEnObjetivo = exampleHikes.filter(h => {
                 const config = hikeConfig[h.category];
                 return (h.asistentes || 0) >= config.objective;
             }).length;
@@ -1760,9 +1847,9 @@
 
             // Llenar tabla de bitácoras
             const tbody = document.getElementById('bitacorasTableBody');
-            tbody.innerHTML = hikesToUse.map(h => `
+            tbody.innerHTML = exampleHikes.map(h => `
                 <tr>
-                    <td>${typeof h.date === 'string' ? h.date.split(',')[0] : new Date(h.date).toLocaleDateString()}</td>
+                    <td>${h.dateString || (typeof h.date === 'string' ? h.date.split(',')[0] : new Date(h.date).toLocaleDateString('es-MX'))}</td>
                     <td>${h.name}</td>
                     <td><span class="hike-tipo ${h.category}">${hikeConfig[h.category]?.label || 'Normal'}</span></td>
                     <td>${h.guia_lider || 'Por asignar'}</td>
