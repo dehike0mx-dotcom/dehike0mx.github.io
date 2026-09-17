@@ -1081,22 +1081,22 @@
                 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
+                console.log('📅 Hoy:', today.toLocaleDateString('es-MX'));
                 
-                // Convertir y filtrar solo hikes FUTUROS
+                // Convertir y filtrar hikes desde hoy en adelante
                 const loadedHikes = hikesData
                     .map((h, idx) => {
-                        // Parsear fecha DD/MM/YY
+                        // Parsear fecha ISO: YYYY-MM-DD
                         let fecha = null;
                         try {
-                            const partes = h.date.split('/');
-                            if (partes.length === 3) {
-                                const day = parseInt(partes[0]);
-                                const month = parseInt(partes[1]);
-                                const year = 2000 + parseInt(partes[2]);
-                                fecha = new Date(year, month - 1, day);
+                            // Formato ISO: "2026-10-10"
+                            fecha = new Date(h.date + 'T00:00:00');
+                            if (isNaN(fecha.getTime())) {
+                                console.error('Fecha inválida:', h.date);
+                                return null;
                             }
                         } catch(e) {
-                            console.error('Error parseando fecha:', h.date);
+                            console.error('Error parseando fecha:', h.date, e);
                             return null;
                         }
                         
@@ -1114,10 +1114,10 @@
                             bitacora: 'pendiente'
                         };
                     })
-                    .filter(h => h !== null && h.date >= today) // Solo hikes futuros
-                    .sort((a, b) => a.date - b.date); // Ordenar por fecha (más cercano primero)
+                    .filter(h => h !== null && h.date && h.date >= today) // Solo hikes desde hoy
+                    .sort((a, b) => a.date - b.date); // Ordenar por fecha más cercana
                 
-                console.log('✅ Hikes futuros cargados:', loadedHikes.length);
+                console.log('✅ Hikes desde hoy cargados:', loadedHikes.length);
                 return loadedHikes;
             } catch (error) {
                 console.error('❌ Error cargando hikes:', error);
