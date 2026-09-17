@@ -1058,6 +1058,24 @@
     </div>
 
     <script>
+        // URL de Google Apps Script para obtener hikes
+        const GOOGLE_APPS_SCRIPT_HIKES_URL = 'https://script.google.com/macros/s/AKfycbzebD81FabIWwBwOn4c-lz_gIF_AQXBZhIyNL5wQHRB2VzMjN6m2ldlK_AdJ5f3_X5OIQ/exec';
+        const STRIPE_SYNC_URL = 'https://script.google.com/macros/s/AKfycby7Qmcdp-WtQcarg4YdQvVk6O8ZNqbEQHIyqk1t1A-es2lD-mDD1lUunph249GSuZX60g/exec';
+
+        // Cargar hikes desde Google Sheets en tiempo real
+        async function loadHikesFromSheets() {
+            try {
+                const response = await fetch(GOOGLE_APPS_SCRIPT_HIKES_URL);
+                const hikesData = await response.json();
+                
+                console.log('✅ Hikes cargados desde Google Sheets:', hikesData.length);
+                return hikesData || [];
+            } catch (error) {
+                console.error('Error cargando hikes desde Sheets:', error);
+                return [];
+            }
+        }
+
         // Configuración de hikes por tipo
         const hikeConfig = {
             'basico': { max: 8, objective: 8, min: 3, label: 'Básico' },
@@ -1620,7 +1638,7 @@
 
             try {
                 // URL de Google Apps Script
-                const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7Qmcdp-WtQcarg4YdQvVk6O8ZNqbEQHIyqk1t1A-es2lD-mDD1lUunph249GSuZX60g/exec';
+                const APPS_SCRIPT_URL = STRIPE_SYNC_URL;
 
                 // Llamar a Google Apps Script para sincronizar con Stripe
                 const response = await fetch(APPS_SCRIPT_URL, {
@@ -1718,28 +1736,36 @@
         });
 
         // Cargar datos iniciales
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            // Cargar hikes desde Google Sheets
+            const sheetHikes = await loadHikesFromSheets();
+            
+            // Usar hikes de Sheets si existen, sino usar ejemplos
+            const hikesToUse = sheetHikes.length > 0 ? sheetHikes : exampleHikes;
+            
+            console.log('📊 Hikes cargados:', hikesToUse.length);
+            
             renderHikes();
             
             // Calcular KPIs
-            document.getElementById('totalHikes').textContent = exampleHikes.length;
-            document.getElementById('totalAsistentes').textContent = exampleHikes.reduce((sum, h) => sum + h.asistentes, 0);
-            document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
+            document.getElementById('totalHikes').textContent = hikesToUse.length;
+            document.getElementById('totalAsistentes').textContent = hikesToUse.reduce((sum, h) => sum + (h.asistentes || 0), 0);
+            document.getElementById('bitacorasEnviadas').textContent = hikesToUse.filter(h => h.bitacora === 'enviada').length;
             
-            const hikesEnObjetivo = exampleHikes.filter(h => {
+            const hikesEnObjetivo = hikesToUse.filter(h => {
                 const config = hikeConfig[h.category];
-                return h.asistentes >= config.objective;
+                return (h.asistentes || 0) >= config.objective;
             }).length;
             document.getElementById('hikesEnObjetivo').textContent = hikesEnObjetivo;
 
             // Llenar tabla de bitácoras
             const tbody = document.getElementById('bitacorasTableBody');
-            tbody.innerHTML = exampleHikes.map(h => `
+            tbody.innerHTML = hikesToUse.map(h => `
                 <tr>
-                    <td>${h.date.split(',')[0]}</td>
+                    <td>${typeof h.date === 'string' ? h.date.split(',')[0] : new Date(h.date).toLocaleDateString()}</td>
                     <td>${h.name}</td>
-                    <td><span class="hike-tipo ${h.category}">${hikeConfig[h.category].label}</span></td>
-                    <td>${h.guia_lider}</td>
+                    <td><span class="hike-tipo ${h.category}">${hikeConfig[h.category]?.label || 'Normal'}</span></td>
+                    <td>${h.guia_lider || 'Por asignar'}</td>
                     <td>${h.asistentes}</td>
                     <td><span class="badge-priority ${h.bitacora}">${h.bitacora === 'enviada' ? '✅ ENVIADA' : '❌ PENDIENTE'}</span></td>
                 </tr>
