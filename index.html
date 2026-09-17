@@ -1065,7 +1065,7 @@
 
     <script>
         // URL de Google Apps Script para obtener hikes
-        const GOOGLE_APPS_SCRIPT_HIKES_URL = 'https://script.google.com/macros/s/AKfycbw0DKp1gftQz62TeoQJx_x0r1KNbRZVO21wp_zHswUu--MQJKx_qMMENpuSoJftdsE3QQ/exec';
+        const GOOGLE_APPS_SCRIPT_HIKES_URL = 'https://script.google.com/macros/s/AKfycbyhy8-DLyWAuV2PiYDLrl6jOSMevCL2Omn4EhO_8EXfdlehF021Q9LSjYNGF9MbgY0kFA/exec';
         const STRIPE_SYNC_URL = 'https://script.google.com/macros/s/AKfycby7Qmcdp-WtQcarg4YdQvVk6O8ZNqbEQHIyqk1t1A-es2lD-mDD1lUunph249GSuZX60g/exec';
 
         // Cargar hikes desde Google Sheets en tiempo real
@@ -1107,8 +1107,18 @@
                     };
                 });
                 
-                console.log('✅ Hikes cargados desde Google Sheets:', loadedHikes.length);
-                return loadedHikes;
+                // ORDENAR por fecha: más cercano primero
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const sortedHikes = loadedHikes.sort((a, b) => {
+                    const distA = Math.abs(a.date - today);
+                    const distB = Math.abs(b.date - today);
+                    return distA - distB; // Más cercano primero
+                });
+                
+                console.log('✅ Hikes cargados desde Google Sheets:', sortedHikes.length);
+                return sortedHikes;
             } catch (error) {
                 console.error('Error cargando hikes desde Sheets:', error);
                 return [];
@@ -1679,7 +1689,7 @@
                 // Cargar hikes desde Google Sheets
                 const sheetHikes = await loadHikesFromSheets();
                 
-                if (sheetHikes.length > 0) {
+                if (sheetHikes && sheetHikes.length > 0) {
                     // Reemplazar hikes globales
                     exampleHikes.length = 0;
                     exampleHikes.push(...sheetHikes);
@@ -1688,18 +1698,27 @@
                     showSyncStatus('✅ Datos actualizados correctamente', 'success');
                     
                     // Recargar dashboard
-                    renderHikes(document.querySelector('.filter-btn.active')?.dataset.filter || 'todos');
+                    const activeFilter = document.querySelector('.filter-btn.active');
+                    const filterValue = activeFilter ? activeFilter.dataset.filter : 'todos';
+                    renderHikes(filterValue);
                     
                     // Actualizar KPIs
                     document.getElementById('totalHikes').textContent = exampleHikes.length;
                     document.getElementById('totalAsistentes').textContent = exampleHikes.reduce((sum, h) => sum + (h.asistentes || 0), 0);
+                    document.getElementById('bitacorasEnviadas').textContent = exampleHikes.filter(h => h.bitacora === 'enviada').length;
+                    
+                    const hikesEnObjetivo = exampleHikes.filter(h => {
+                        const config = hikeConfig[h.category];
+                        return (h.asistentes || 0) >= (config ? config.objective : 0);
+                    }).length;
+                    document.getElementById('hikesEnObjetivo').textContent = hikesEnObjetivo;
                 } else {
                     throw new Error('No se cargaron hikes desde Google Sheets');
                 }
 
             } catch (error) {
                 console.error('❌ Error actualizando:', error);
-                showSyncStatus('❌ Error al actualizar. Intenta de nuevo.', 'error');
+                showSyncStatus('❌ Error: ' + error.message, 'error');
             } finally {
                 // Restaurar botón
                 btn.classList.remove('loading');
